@@ -5,6 +5,10 @@
   }],
   "routes": [
     {
+      "src": "/favicon.ico",
+      "status": 204
+    },
+    {
       "src": "/(.*)",
       "dest": "api/wsgi.py"
     }
