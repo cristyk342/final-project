@@ -60,7 +60,8 @@ MIDDLEWARE = [
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "https://create-react-app-nu-amber-87.vercel.app"
+    "https://create-react-app-nu-amber-87.vercel.app",
+    "https://final-project-flame-pi.vercel.app"
 ]
 CORS_ALLOW_METHODS = [
     'DELETE',
