@@ -151,60 +151,30 @@ def search_hashtag_videos(request):
         print(f"Apify API Token: {settings.APIFY_API_TOKEN}")
         print(f"Searching for hashtag: {hashtag}")
         
-        # Make direct API call to Apify
-        api_url = "https://api.apify.com/v2/acts/clockworks~tiktok-hashtag-scraper/runs"
+        # Initialize the ApifyClient with your API token
+        client = ApifyClient("apify_api_986sDlvmFvn1YjHbVz28vxgDS4EIRo13ikNB")
+
+        # Prepare the Actor input
         run_input = {
             "hashtags": [hashtag],
-            "resultsPerPage": 100  # Get more results to sort by recency and views
+            "resultsPerPage": 100,
+            "shouldDownloadVideos": False,
+            "shouldDownloadCovers": False,
+            "shouldDownloadSubtitles": False,
+            "shouldDownloadSlideshowImages": False,
         }
 
-        print(f"Making API request to: {api_url}")
-        print(f"With input: {json.dumps(run_input, indent=2)}")
-
+        print(f"Running Apify actor with input: {run_input}")
+        
         try:
-            # Make the API call
-            response = requests.post(
-                api_url,
-                params={"token": settings.APIFY_API_TOKEN},
-                json=run_input
-            )
+            # Run the Actor and wait for it to finish
+            run = client.actor("f1ZeP0K58iwlqG2pY").call(run_input=run_input)
             
-            if not response.ok:
-                print(f"API request failed with status {response.status_code}")
-                print(f"Response: {response.text}")
-                return Response(
-                    {'error': 'Failed to fetch hashtag data from TikTok API'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            run_data = response.json()
-            dataset_id = run_data.get('data', {}).get('defaultDatasetId')
-            
-            if not dataset_id:
-                print("No dataset ID in response")
-                return Response(
-                    {'error': 'Invalid API response'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            # Fetch the results from the dataset
-            dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items"
-            print(f"Fetching results from dataset: {dataset_url}")
-            
-            dataset_response = requests.get(
-                dataset_url,
-                params={"token": settings.APIFY_API_TOKEN}
-            )
-            
-            if not dataset_response.ok:
-                print(f"Dataset request failed with status {dataset_response.status_code}")
-                print(f"Response: {dataset_response.text}")
-                return Response(
-                    {'error': 'Failed to fetch hashtag data'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            items = dataset_response.json()
+            # Fetch actor results from the run's dataset
+            print("Fetching results from dataset...")
+            items = []
+            for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+                items.append(item)
             print(f"Retrieved {len(items)} items from dataset")
             
             if not items:
@@ -537,59 +507,30 @@ def analyze_comments(request):
         print(f"Received video URL: {video_url}")
 
         try:
-            # Make direct API call to Apify
-            api_url = "https://api.apify.com/v2/acts/clockworks~tiktok-comments-scraper/runs"
+            # Initialize the ApifyClient with your API token
+            client = ApifyClient("apify_api_986sDlvmFvn1YjHbVz28vxgDS4EIRo13ikNB")
+
+            # Prepare the Actor input
             run_input = {
                 "postURLs": [video_url],
-                "commentsPerPost": 100
+                "commentsPerPost": 100,
+                "maxRepliesPerComment": None,
+                "resultsPerPage": 100,
+                "profileScrapeSections": ["videos"],
+                "profileSorting": "latest",
+                "excludePinnedPosts": False,
             }
 
-            print(f"Making API request to: {api_url}")
-            print(f"With input: {json.dumps(run_input, indent=2)}")
-
-            # Make the API call
-            response = requests.post(
-                api_url,
-                params={"token": settings.APIFY_API_TOKEN},
-                json=run_input
-            )
+            print(f"Running Apify actor with input: {run_input}")
             
-            if not response.ok:
-                print(f"API request failed with status {response.status_code}")
-                print(f"Response: {response.text}")
-                return Response(
-                    {'error': 'Failed to fetch comments from TikTok API'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            run_data = response.json()
-            dataset_id = run_data.get('data', {}).get('defaultDatasetId')
+            # Run the Actor and wait for it to finish
+            run = client.actor("BDec00yAmCm1QbMEI").call(run_input=run_input)
             
-            if not dataset_id:
-                print("No dataset ID in response")
-                return Response(
-                    {'error': 'Invalid API response'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            # Fetch the results from the dataset
-            dataset_url = f"https://api.apify.com/v2/datasets/{dataset_id}/items"
-            print(f"Fetching results from dataset: {dataset_url}")
-            
-            dataset_response = requests.get(
-                dataset_url,
-                params={"token": settings.APIFY_API_TOKEN}
-            )
-            
-            if not dataset_response.ok:
-                print(f"Dataset request failed with status {dataset_response.status_code}")
-                print(f"Response: {dataset_response.text}")
-                return Response(
-                    {'error': 'Failed to fetch comments data'},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            comments = dataset_response.json()
+            # Fetch actor results from the run's dataset
+            print("Fetching results from dataset...")
+            comments = []
+            for item in client.dataset(run["defaultDatasetId"]).iterate_items():
+                comments.append(item)
             print(f"Retrieved {len(comments)} comments from dataset")
 
             if not comments:
