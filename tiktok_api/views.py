@@ -275,22 +275,39 @@ def search_hashtag_videos(request):
 
 @api_view(['POST'])
 def get_ai_insights(request):
+    print("\n=== AI Insights Debug Info ===")
+    print(f"Request method: {request.method}")
+    print(f"Request headers: {request.headers}")
+    print(f"Raw request body: {request.body.decode()}")
+    print(f"Parsed request data: {request.data}")
+    
     videos = request.data.get('videos')
     if not videos:
-        return Response({'error': 'Videos data is required'}, status=status.HTTP_400_BAD_REQUEST)
+        error_msg = 'Videos data is required'
+        print(f"Error: {error_msg}")
+        return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        if not isinstance(videos, list) or len(videos) == 0:
-            return Response(
-                {'error': 'No videos provided for analysis'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not isinstance(videos, list):
+            error_msg = f'Videos must be a list, got {type(videos)}'
+            print(f"Error: {error_msg}")
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if len(videos) == 0:
+            error_msg = 'No videos provided for analysis'
+            print(f"Error: {error_msg}")
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
             
         # Format video data for OpenAI
         video_descriptions = []
+        print(f"Processing {len(videos)} videos")
         for i, video in enumerate(videos[:10]):  # Limit to 10 videos for analysis
+            print(f"Processing video {i+1}")
+            print(f"Video data: {video}")
+            
             desc = video.get('description', '').strip()
             if not desc:
+                print(f"Skipping video {i+1} - no description")
                 continue
                 
             stats = video.get('stats', {})
@@ -303,12 +320,15 @@ def get_ai_insights(request):
             )
             
         if not video_descriptions:
+            print("Error: No valid video descriptions found")
             return Response(
                 {'error': 'No valid video descriptions found for analysis'},
                 status=status.HTTP_400_BAD_REQUEST
             )
             
         video_descriptions_text = "\n".join(video_descriptions)
+        print("Formatted video descriptions:")
+        print(video_descriptions_text)
 
         prompt = f"""Analyze these TikTok videos for #{request.data.get('hashtag', 'unknown')} and provide insights:
 
@@ -321,22 +341,56 @@ Please provide:
 4. Trending elements and themes within this hashtag community
 5. Suggestions for related hashtags to combine with
 """
+        print("Generated OpenAI prompt:")
+        print(prompt)
 
+        print(f"Using OpenAI API key: {settings.OPENAI_API_KEY[:10]}...")
         openai.api_key = settings.OPENAI_API_KEY
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a TikTok content strategy expert."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-
-        insights = response.choices[0].message.content
-
-        return Response({'insights': insights})
+        
+        try:
+            print("Making OpenAI API request...")
+            response = openai.ChatCompletion.create(
+                model="gpt-4-0613",  # Using a specific stable version
+                messages=[
+                    {"role": "system", "content": "You are a TikTok content strategy expert. Analyze videos and provide clear, actionable insights."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,  # Adding some creativity while keeping responses focused
+                max_tokens=1000,  # Ensuring we get detailed responses
+                presence_penalty=0.6  # Encouraging diverse insights
+            )
+            print("OpenAI API response received")
+            print(f"Response: {response}")
+            
+            insights = response.choices[0].message.content
+            print("Extracted insights:")
+            print(insights)
+            
+            return Response({'insights': insights})
+            
+        except openai.error.AuthenticationError as e:
+            print(f"OpenAI Authentication Error: {str(e)}")
+            return Response(
+                {'error': 'OpenAI API key is invalid'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except openai.error.InvalidRequestError as e:
+            print(f"OpenAI Invalid Request Error: {str(e)}")
+            return Response(
+                {'error': 'Invalid request to OpenAI API'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except openai.error.RateLimitError as e:
+            print(f"OpenAI Rate Limit Error: {str(e)}")
+            return Response(
+                {'error': 'OpenAI API rate limit exceeded'}, 
+                status=status.HTTP_429_TOO_MANY_REQUESTS
+            )
 
     except Exception as e:
-        print(f"Error in get_ai_insights: {str(e)}")
+        print(f"Unexpected error in get_ai_insights: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return Response(
             {'error': 'Failed to generate AI insights'}, 
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -496,9 +550,13 @@ def analyze_post_timing(request):
 @api_view(['GET', 'POST'])
 def analyze_comments(request):
     print("analyze_comments endpoint called")
+    print(f"Request method: {request.method}")
+    print(f"GET params: {request.GET}")
+    print(f"POST data: {request.data}")
     try:
-        # Get URL from either GET parameters or POST data
+        # Get URL from either query parameters or request body
         video_url = request.GET.get('url') if request.method == 'GET' else request.data.get('url')
+        print(f"Extracted video URL: {video_url}")
         if not video_url:
             return Response(
                 {'error': 'Video URL is required'},
