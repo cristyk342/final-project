@@ -497,7 +497,8 @@ def analyze_post_timing(request):
 def analyze_comments(request):
     print("analyze_comments endpoint called")
     try:
-        video_url = request.data.get('url')
+        # Get URL from either GET parameters or POST data
+        video_url = request.GET.get('url') if request.method == 'GET' else request.data.get('url')
         if not video_url:
             return Response(
                 {'error': 'Video URL is required'},
