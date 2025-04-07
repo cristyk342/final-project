@@ -186,23 +186,37 @@ def search_hashtag_videos(request):
                 try:
                     create_time = item.get('createTime', 0)
                     print(f"Raw item: {json.dumps(item, indent=2)}")
+                    # Extract stats with fallback paths
+                    stats = item.get('stats', {}) or item.get('videoMeta', {})
+                    author = item.get('author', {}) or item.get('authorMeta', {})
+                    
                     video_data = {
                         'id': str(item.get('id', '')),
-                        'description': item.get('text', ''),
-                        'thumbnail': item.get('videoMeta', {}).get('coverUrl', '') or item.get('videoMeta', {}).get('originalCoverUrl', ''),
+                        'description': item.get('text', '') or item.get('desc', ''),
+                        'thumbnail': (
+                            item.get('thumbnail', '') or 
+                            item.get('coverUrl', '') or 
+                            item.get('video', {}).get('cover', '') or
+                            item.get('video', {}).get('originCover', '')
+                        ),
                         'createTime': create_time,
                         'stats': {
-                            'diggCount': int(item.get('videoMeta', {}).get('diggCount', 0)),
-                            'commentCount': int(item.get('videoMeta', {}).get('commentCount', 0)),
-                            'shareCount': int(item.get('videoMeta', {}).get('shareCount', 0)),
-                            'playCount': int(item.get('videoMeta', {}).get('playCount', 0))
+                            'diggCount': int(stats.get('diggCount', 0)),
+                            'commentCount': int(stats.get('commentCount', 0)),
+                            'shareCount': int(stats.get('shareCount', 0)),
+                            'playCount': int(stats.get('playCount', 0))
                         },
                         'author': {
-                            'name': item.get('authorMeta', {}).get('name', ''),
-                            'nickname': item.get('authorMeta', {}).get('nickName', ''),
-                            'avatar': item.get('authorMeta', {}).get('avatar', '')
+                            'name': author.get('name', '') or author.get('uniqueId', ''),
+                            'nickname': author.get('nickname', '') or author.get('nickName', ''),
+                            'avatar': author.get('avatar', '') or author.get('avatarLarger', '')
                         },
-                        'videoUrl': item.get('webVideoUrl', '') or item.get('videoUrl', '')
+                        'videoUrl': (
+                            item.get('webVideoUrl', '') or 
+                            item.get('videoUrl', '') or 
+                            item.get('video', {}).get('playUrl', '') or
+                            item.get('video', {}).get('downloadAddr', '')
+                        )
                     }
                     
                     # Print processed video data for debugging
@@ -494,9 +508,12 @@ def analyze_comments(request):
         try:
             # Run the TikTok Comments Scraper actor
             run_input = {
+                "postURLs": [video_url],
                 "commentsPerPost": 100,
-                "maxRepliesPerComment": 0,
-                "postURLs": [video_url]
+                "resultsPerPage": 100,
+                "profileScrapeSections": ["videos"],
+                "profileSorting": "latest",
+                "excludePinnedPosts": False
             }
 
             print(f"Apify actor input: {run_input}")
