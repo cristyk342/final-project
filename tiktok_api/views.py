@@ -493,7 +493,7 @@ def analyze_post_timing(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 def analyze_comments(request):
     print("analyze_comments endpoint called")
     try:
@@ -513,12 +513,7 @@ def analyze_comments(request):
             # Prepare the Actor input
             run_input = {
                 "postURLs": [video_url],
-                "commentsPerPost": 100,
-                "maxRepliesPerComment": None,
-                "resultsPerPage": 100,
-                "profileScrapeSections": ["videos"],
-                "profileSorting": "latest",
-                "excludePinnedPosts": False,
+                "commentsPerPost": 100
             }
 
             print(f"Running Apify actor with input: {run_input}")
@@ -530,7 +525,8 @@ def analyze_comments(request):
             print("Fetching results from dataset...")
             comments = []
             for item in client.dataset(run["defaultDatasetId"]).iterate_items():
-                comments.append(item)
+                if item.get('text'):  # Only include comments that have text
+                    comments.append(item)
             print(f"Retrieved {len(comments)} comments from dataset")
 
             if not comments:
