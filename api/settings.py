@@ -57,9 +57,10 @@ MIDDLEWARE = [
 ]
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Temporarily allow all origins for local development
+CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for development
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
     "https://create-react-app-nu-amber-87.vercel.app",
     "https://final-project-flame-pi.vercel.app"
 ]
@@ -71,6 +72,7 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
+CORS_EXPOSE_HEADERS = ['*']
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',

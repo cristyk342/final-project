@@ -273,13 +273,21 @@ def search_hashtag_videos(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-@api_view(['POST'])
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
+@api_view(['POST', 'OPTIONS'])
+@permission_classes([AllowAny])
 def get_ai_insights(request):
     print("\n=== AI Insights Debug Info ===")
     print(f"Request method: {request.method}")
     print(f"Request headers: {request.headers}")
-    print(f"Raw request body: {request.body.decode()}")
+    print(f"Raw request body: {request.body.decode() if request.body else None}")
     print(f"Parsed request data: {request.data}")
+    
+    # Handle preflight requests
+    if request.method == 'OPTIONS':
+        return Response({}, status=status.HTTP_200_OK)
     
     videos = request.data.get('videos')
     if not videos:
