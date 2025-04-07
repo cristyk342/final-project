@@ -138,6 +138,7 @@ def get_profile_videos(request):
 
 @api_view(['GET'])
 def search_hashtag_videos(request):
+    print("search_hashtag_videos endpoint called")
     try:
         hashtag = request.GET.get('hashtag', '').strip('#')
         if not hashtag:
@@ -156,11 +157,7 @@ def search_hashtag_videos(request):
         # Prepare the actor input
         run_input = {
             "hashtags": [hashtag],
-            "resultsPerPage": 100,  # Get more results to sort by recency and views
-            "shouldDownloadCovers": False,
-            "shouldDownloadSlideshowImages": False,
-            "shouldDownloadSubtitles": False,
-            "shouldDownloadVideos": False
+            "resultsPerPage": 100  # Get more results to sort by recency and views
         }
 
         print(f"Running Apify actor with input: {run_input}")
@@ -492,6 +489,7 @@ def analyze_post_timing(request):
 
 @api_view(['POST'])
 def analyze_comments(request):
+    print("analyze_comments endpoint called")
     try:
         video_url = request.data.get('url')
         if not video_url:
@@ -509,11 +507,7 @@ def analyze_comments(request):
             # Run the TikTok Comments Scraper actor
             run_input = {
                 "postURLs": [video_url],
-                "commentsPerPost": 100,
-                "resultsPerPage": 100,
-                "profileScrapeSections": ["videos"],
-                "profileSorting": "latest",
-                "excludePinnedPosts": False
+                "commentsPerPost": 100
             }
 
             print(f"Apify actor input: {run_input}")
