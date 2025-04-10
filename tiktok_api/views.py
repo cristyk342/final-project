@@ -284,6 +284,8 @@ def get_ai_insights(request):
     print(f"Request headers: {request.headers}")
     print(f"Raw request body: {request.body.decode() if request.body else None}")
     print(f"Parsed request data: {request.data}")
+    print(f"OpenAI API Key configured: {'Yes' if settings.OPENAI_API_KEY else 'No'}")
+    print(f"OpenAI API Key length: {len(settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else 0}")
     
     # Handle preflight requests
     if request.method == 'OPTIONS':
@@ -357,18 +359,25 @@ Please provide:
         
         try:
             print("Making OpenAI API request...")
-            response = openai.ChatCompletion.create(
-                model="gpt-4-0613",  # Using a specific stable version
-                messages=[
-                    {"role": "system", "content": "You are a TikTok content strategy expert. Analyze videos and provide clear, actionable insights."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,  # Adding some creativity while keeping responses focused
-                max_tokens=1000,  # Ensuring we get detailed responses
-                presence_penalty=0.6  # Encouraging diverse insights
-            )
-            print("OpenAI API response received")
-            print(f"Response: {response}")
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4-0613",  # Using a specific stable version
+                    messages=[
+                        {"role": "system", "content": "You are a TikTok content strategy expert. Analyze videos and provide clear, actionable insights."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,  # Adding some creativity while keeping responses focused
+                    max_tokens=1000,  # Ensuring we get detailed responses
+                    presence_penalty=0.6  # Encouraging diverse insights
+                )
+                print("OpenAI API response received successfully")
+                print(f"Response status: Success")
+                print(f"Response type: {type(response)}")
+                print(f"Response structure: {response.keys() if hasattr(response, 'keys') else 'No keys available'}")
+            except Exception as api_error:
+                print(f"Error during OpenAI API call: {str(api_error)}")
+                print(f"Error type: {type(api_error)}")
+                raise
             
             insights = response.choices[0].message.content
             print("Extracted insights:")
