@@ -157,7 +157,7 @@ def search_hashtag_videos(request):
         # Prepare the Actor input
         run_input = {
             "hashtags": [hashtag],
-            "resultsPerPage": 100,
+            "resultsPerPage": 20,
             "shouldDownloadVideos": False,
             "shouldDownloadCovers": False,
             "shouldDownloadSubtitles": False,
