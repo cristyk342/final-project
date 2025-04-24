@@ -5,3 +5,5 @@ __pycache__/
 .env.local
 .venv/
 venv/
+.vercel/
+static/
